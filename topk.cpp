@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
 using namespace std;
 
@@ -27,15 +28,43 @@ typename vector<T>::size_type topk(vector<T>& a, typename vector<T>::size_type s
     }
 }
 
+template<typename ForwardIterator, typename CMP>
+ForwardIterator topk(ForwardIterator begin, ForwardIterator end, CMP cmp, unsigned int k) {
+    typedef typename iterator_traits<ForwardIterator>::difference_type diff_t;
+    auto dist = static_cast<diff_t>(k); 
+    auto ret(end);
+    auto start(begin);
+    while(distance(start, ret) > dist) {
+        auto idx = start;
+        for(auto it = start + 1; it != ret; ++it) {
+            if(cmp(*it, *start)) {
+                ++idx;
+                swap(*idx, *it);
+            }
+        }
+        swap(*start, *idx);
+        ++idx;
+        const auto d = distance(start, idx);
+        if(d == dist) {
+            ret = idx;
+        } else if(d < dist) {
+            start = idx;
+            dist -= d;
+        } else {
+            ret = idx;
+        }
+    }
+    return ret;
+}
+
 
 int main(int argc, char* argv[]) {
-    vector<int> c = {5, 3, 4, 0, 2, 1};
-    int k = 3;
+    vector<int> c = {5, 3, 4, -1, 0, 2, 6, 1};
+    int k = 4;
     auto op = [](int a, int b)->bool{ return a < b; };
-    int idx = topk(c, 0, c.size(), k, op);
-    cout << "idx = " << idx << endl;
-    for(int i = idx; i < c.size(); ++i) {
-	cout << c[i] << " ";
+    auto idx = topk(c.begin(), c.end(), op, k);
+    for(auto it = c.begin(); it != idx; ++it) {
+        cout <<*it << ' ';
     }
     cout << endl;
     return 0;
